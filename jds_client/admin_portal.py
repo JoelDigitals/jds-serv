@@ -104,7 +104,7 @@ class JDSAdminPortal(tk.Tk):
         tk.Label(card, text="Server-URL", font=("Segoe UI", 10, "bold"),
                  bg=BG_CARD, fg=TEXT_LIGHT).pack(anchor="w")
         self.entry_url = ModernInput(card, width=38)
-        self.entry_url.insert(0, "https://jds-serv.onrender.com")
+        self.entry_url.insert(0, "https://deine-app.onrender.com")
         self.entry_url.pack(fill="x", pady=(4, 12))
 
         tk.Label(card, text="Benutzername", font=("Segoe UI", 10, "bold"),

@@ -72,7 +72,7 @@ class JDSInstaller(tk.Tk):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.current_step = 1
         self.steps_data = {
-            "server_url": "https://jds-serv.onrender.com",
+            "server_url": "https://deine-app.onrender.com",
             "client_name": platform.node() or "Mein-PC",
             "backup_paths": get_default_paths(),
             "interval": "180",
@@ -181,7 +181,7 @@ class JDSInstaller(tk.Tk):
         tk.Label(self.content_frame, text="Trage hier die Adresse deines JDS-Servers ein.",
                  font=("Segoe UI", 11), bg=BG_DARK, fg=TEXT_MUTED,
                  wraplength=500, justify="left").pack(anchor="w", pady=(10, 20))
-        tk.Label(self.content_frame, text="Server-URL (z.B. https://jds-serv.onrender.com)",
+        tk.Label(self.content_frame, text="Server-URL (z.B. https://deine-app.onrender.com)",
                  font=("Segoe UI", 10, "bold"), bg=BG_DARK, fg=TEXT_LIGHT).pack(anchor="w")
         self.entry_server_url = ModernInput(self.content_frame)
         self.entry_server_url.insert(0, self.steps_data["server_url"])

@@ -300,13 +300,10 @@ def register_client(request):
 @permission_classes([IsAuthenticated])
 def export_metadata(request):
     user = request.user
-    is_admin = user.is_staff or user.is_superuser
-    
-    if not is_admin:
+    if not (user.is_staff or user.is_superuser):
         return Response({"error": "Nur Administratoren können Metadaten exportieren"}, status=403)
-        
+
     company_id = request.GET.get("company_id")
-    
     clients = Client.objects.all()
     if hasattr(user, "profile"):
         clients = clients.filter(company=user.profile.company)

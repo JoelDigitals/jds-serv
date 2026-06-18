@@ -12,8 +12,8 @@ DATA_FILE = os.path.join(CONFIG_DIR, ".jds_data")
 
 DEFAULT_CONFIG = {
     "server": {
-        "url": "http://127.0.0.1:8000",
-        "register_url": "http://127.0.0.1:8000/api/register/",
+        "url": "https://deine-app.onrender.com",
+        "register_url": "https://deine-app.onrender.com/api/register/",
     },
     "client": {
         "name": platform.node() or "Mein-PC",

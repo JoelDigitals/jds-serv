@@ -1,166 +1,139 @@
-# JDS Serv - Backup-Management-System
+# JDS Serv — Automatisches Backup-System
 
-Automatische Backups für Unternehmen — von Mitarbeiter-Laptops/PCs auf einen zentralen Server. Inklusive **Protokollführung, Metadaten-Export, Client-Verwaltung, Admin-Portal und vollständiger Unternehmensverwaltung**.
-
-## Architektur
-
-```
-┌──────────────────────────┐     ┌────────────────────────┐     ┌─────────────────┐
-│  JDS-Client-Installer.exe │────▶│  Django Web Server      │────▶│  Supabase       │
-│  (Endnutzer, 1-Klick)     │     │  (jds_web/) auf Render  │     │  (PostgreSQL)   │
-│                           │     │                         │     │                 │
-│  - Inkrementelles Backup  │     │  - Web-Dashboard         │     │  - Unternehmen  │
-│    (nur geänderte Dateien) │     │  - Client-Verwaltung     │     │  - Clients      │
-│  - Alle 3 Std automatisch │     │  - Metadaten-Export JSON │     │  - Backups      │
-│  - Windows Scheduler      │     │  - REST API              │     │  - Datei-Hashes │
-│  - Verbindungstest        │     │  - Admin-Oberfläche      │     │  - Logs         │
-├──────────────────────────┤     │  - CRON-Cleanup (5 Tage) │     │  - 5 Tage Daten │
-│  JDS-Admin-Portal.exe     │────▶│                         │     │                 │
-│  (Admin, Verwaltung)      │     │  Protokollführung:       │     └─────────────────┘
-│                           │     │  - BackupLog (Info/Warn/
-│  - Client-Übersicht       │     │    Error/Debug)
-│  - Metadaten herunterladen│     │  - BackupFile Hashes
-│  - JSON-Export            │     │  - Auto-Löschung
-└──────────────────────────┘     └────────────────────────┘
-```
-
-## Wichtige Features
-
-### Protokollführung & Metadaten
-- **Jeder Backup-Job** protokolliert Dateinamen, Pfade, SHA-256-Hashes, Dateigrößen und Timestamps.
-- **Backup-Logs** (Infos, Warnungen, Fehler) werden für jeden Client gespeichert.
-- **JSON-Metadaten-Export**: Admin kann alle Backup-Daten (Clients, Jobs, Dateien, Hashes) als eine einzige `.json`-Datei herunterladen — perfekt für Audits und externe Sicherung.
-
-### Unternehmen & Clients
-- **Unternehmen** werden im Django-Admin oder per Admin-Portal angelegt.
-- **UserProfile** verknüpft Django-Benutzer mit einem Unternehmen → jeder Admin sieht nur seine eigenen Clients & Daten.
-- Clients können über die **Web-Oberfläche** (`Client anlegen`) oder das **Admin-Portal** erstellt werden.
-
-### Inkrementelles Backup (nur geänderte Dateien)
-- **Alle 3 Stunden (180 Min)** scannt der Client nur geänderte und neue Dateien (per mtime-Vergleich).
-- Die bereits gesicherten, unveränderten Dateien werden **nicht erneut hochgeladen**.
-- Mit `--full` kann ein vollständiges Backup erzwungen werden.
-- Ein **Backup-State** (`.jds_backup_state.json`) wird lokal gespeichert.
-
-### Datenspeicherung (max. 5 Tage)
-- **Standard: Backups werden nach 5 Tagen automatisch gelöscht** (inkl. Dateien von der Festplatte).
-- Konfigurierbar in den Unternehmenseinstellungen (z.B. auf 7 Tage).
-- Render-Cron-Job führt den Cleanup alle 6 Stunden automatisch aus.
-
-### Admin-Portal (.exe)
-- Eigenständige Desktop-App für Administratoren (kein Python nötig).
-- Login mit Django-Benutzername + Passwort.
-- Zeigt alle Clients des eigenen Unternehmens in einer übersichtlichen Tabelle.
-- **"Metadaten exportieren"** speichert eine vollständige JSON-Datei lokal auf dem Admin-PC.
+Backups von Mitarbeiter-PCs automatisch auf einen zentralen Server sichern. Kostenlos hostbar auf Render.com.
 
 ---
 
-## Schnellstart
+## Schritt 1: Code auf GitHub laden
 
-### 1. Server & Datenbank
+Öffne eine **PowerShell** im Projektordner und führe aus:
 
 ```powershell
-# Setup lokal
-cd setup
-powershell -ExecutionPolicy Bypass -File setup_server.ps1
-cd ..\jds_web
-python manage.py runserver 0.0.0.0:8000
+# Git initialisieren
+git init
+git add .
+git commit -m "JDS Serv"
+
+# Repo auf github.com erstellen (leer, ohne README)
+# Dann:
+git remote add origin https://github.com/DEIN-USERNAME/jds-serv.git
+git branch -M main
+git push -u origin main
 ```
 
-Supabase-Datenbank: SQL aus `deploy/supabase_setup.sql` im Supabase SQL Editor ausführen.
+---
 
-### 1b. Deployment auf Render (kostenlos)
+## Schritt 2: Kostenlosen Render-Server aufsetzen
+
+1. Gehe auf **[dashboard.render.com](https://dashboard.render.com)** → mit GitHub anmelden
+2. Klicke **"New" → "Web Service"**
+3. Wähle dein GitHub-Repo `jds-serv` aus
+4. Fülle die Felder **exakt** so aus:
+
+| Feld | Wert |
+|------|-------|
+| **Name** | `deine-app` (bestimmt deine URL: `deine-app.onrender.com`) |
+| **Region** | Frankfurt (EU) |
+| **Branch** | `main` |
+| **Build Command** | `pip install -r jds_web/requirements.txt` |
+| **Start Command** | `cd jds_web && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py ensure_admin && gunicorn jds_web.wsgi:application --workers=2 --threads=2 --timeout=120 --bind=0.0.0.0:$PORT` |
+| **Instance Type** | **Free** |
+
+5. Ganz unten: **"Add Disk"**
+   - **Name**: `backup-data`
+   - **Mount Path**: `/opt/render/project/src/jds_web/media`
+   - **Size**: `10 GB`
+
+6. **Environment Variables**: **ALLE FELDER LEER LASSEN!** Keine Env-Variablen nötig.
+
+7. Klicke **"Create Web Service"** — Render baut und deployed jetzt (~3 Minuten)
+
+8. Dein Server läuft unter: **`https://deine-app.onrender.com`**
+
+9. Admin-Login: **`admin`** / Passwort: **`admin123`** → sofort ändern unter `/admin/`
+
+---
+
+## Schritt 3: Server wach halten (Fastcron)
+
+Render Free Tier schläft nach **15 Minuten Inaktivität** ein. Mit Fastcron bleibt der Server dauerhaft wach:
+
+1. Gehe auf **[fastcron.com](https://fastcron.com)** → kostenlos registrieren
+2. **"New Cron Job"** anlegen:
+   - **URL**: `https://deine-app.onrender.com/api/actions/`
+   - **Interval**: `Every 10 minutes`
+   - Klicke **"Create"**
+
+Der Ping alle 10 Minuten hält deinen Render-Server dauerhaft aktiv — **kostenlos**.
+
+---
+
+## Schritt 4: Client auf Mitarbeiter-PCs installieren
+
+### Option A: Python direkt (einfach)
+
+Auf dem Mitarbeiter-PC:
 
 ```powershell
-# 1. Repo auf GitHub pushen
-# 2. Auf dashboard.render.com: "New" → "Blueprint" → Repo auswählen
-# 3. render.yaml wird automatisch erkannt
-# 4. Supabase-Umgebungsvariablen (SUPABASE_DB_PASSWORD, SUPABASE_DB_HOST) manuell setzen
-# 5. Nach dem ersten Deploy: Render Shell öffnen und ausführen:
-#    cd jds_web && python manage.py createsuperuser
+cd jds_client
+pip install -r requirements.txt
+python installer_gui.py
 ```
 
-Der Render-Blueprint (`deploy/render.yaml`) erstellt:
-- **Web Service** `jds-serv` — Django App mit 10 GB Disk für Backups
-- **Cron Job** `jds-cleanup` — Löscht alle 6 Std. Backups älter als 5 Tage
+Der grafische Setup-Assistent öffnet sich → Server-URL `https://deine-app.onrender.com` eintragen → PC-Name + Ordner wählen → auf **Installieren** klicken. Fertig.
 
-### 2. Executables (.exe) bauen
+### Option B: Als .exe bauen (für Endnutzer ohne Python)
+
+Auf deinem Admin-PC einmalig:
 
 ```powershell
-# Doppelklick auf build_exe.bat (oder:)
 python build_executables.py
 ```
 
-Erzeugt im Ordner `build_dist/`:
-- **JDS-Client-Installer.exe** — Mitarbeiter-Installer (Doppelklick → Assistent → Fertig)
-- **JDS-Backup-Agent.exe** — Hintergrund-Backup-Prozess
-- **JDS-Admin-Portal.exe** — Admin-Verwaltungs-App
-
-### 3. Client auf Mitarbeiter-PCs installieren
-
-Der Mitarbeiter öffnet `JDS-Client-Installer.exe` und folgt dem Assistenten:
-1. Begrüßung
-2. Server-URL + Verbindungstest
-3. PC-Name + Ordner wählen + Backup-Intervall (empfohlen: 180 Min = alle 3 Std)
-4. Klick auf **Installieren** → automatische Einrichtung + Task Scheduler
-
-**CLI-Nutzung** (fortgeschritten):
-```powershell
-python main.py --backup           # Inkrementell (nur geänderte Dateien)
-python main.py --backup --full    # Vollständiges Backup erzwingen
-python main.py --daemon           # Hintergrund-Daemon (alle 3 Std)
-python main.py --daemon --interval 120  # Daemon mit 2-Std-Intervall
-```
-
-### 4. Admin-Portal starten
-
-Der Admin öffnet `JDS-Admin-Portal.exe`:
-1. Server-URL und Django-Login eingeben
-2. Client-Übersicht ansehen
-3. **Metadaten exportieren** → JSON-Datei speichern
-
----
-
-## API Endpunkte
-
-| Methode | Pfad | Beschreibung |
-|---------|------|-------------|
-| POST | `/api/register/` | Client registrieren |
-| POST | `/api/login/` | Admin-Login (gibt DRF-Token zurück) |
-| GET | `/api/status/` | Client-Status abrufen |
-| GET | `/api/clients/` | Alle Clients des Unternehmens |
-| POST | `/api/backup/start/` | Backup starten |
-| POST | `/api/backup/<id>/update/` | Backup-Status aktualisieren |
-| POST | `/api/backup/<id>/upload/` | Datei hochladen |
-| POST | `/api/log/` | Log-Ereignis senden |
-| GET | `/api/metadata/export/` | **Metadaten als JSON exportieren** |
+Erzeugt `build_dist/JDS-Client-Installer.exe` — diese Datei an Mitarbeiter verteilen. Doppelklick → Assistent → Fertig.
 
 ---
 
 ## Projektstruktur
 
 ```
-JDS-Serv/
-├── jds_web/               # Django Web-App
-│   ├── jds_web/           # Django Projekteinstellungen
-│   ├── backup_app/        # Backup-App (Models, Views, API)
-│   ├── media/backups/     # Gesicherte Dateien (max 5 Tage)
-│   └── manage.py
-├── jds_client/            # Windows Client-Anwendungen
-│   ├── installer_gui.py   # Moderner GUI-Installer (Tkinter)
-│   ├── admin_portal.py    # Admin-Portal GUI (Tkinter)
-│   ├── main.py            # Backup-Agent (CLI/Hintergrund)
-│   ├── backup_engine.py   # Datei-Scan & Hashing
-│   ├── api_client.py      # REST API Client
-│   ├── config.py          # Konfigurationsverwaltung
-│   └── config.ini         # Standard-Konfiguration
-├── build_executables.py   # Baut alle .exe-Dateien
-├── build_exe.bat          # Einfacher Doppelklick-Build
-├── deploy/                # Deployment-Konfiguration
-│   ├── render.yaml        # Render.com Deployment
-│   ├── Procfile           # Prozess-Definition
-│   └── supabase_setup.sql # Supabase Tabellen-Setup
-└── setup/                 # Setup-Skripte
-    ├── setup_server.ps1   # Server-Einrichtung
-    └── install_client.bat # Client-Installationsstarter
+jds-serv/
+├── jds_web/                # Django Web-App (Server)
+│   ├── jds_web/settings.py # Konfiguration (SQLite, kein Env)
+│   ├── backup_app/         # Models, Views, API, Admin
+│   └── manage.py           # Django Kommandos
+├── jds_client/             # Windows Client
+│   ├── installer_gui.py    # GUI-Setup-Assistent
+│   ├── admin_portal.py     # Admin-Desktop-App
+│   ├── main.py             # Backup-Agent (CLI)
+│   └── config.ini          # Client-Konfiguration
+├── render.yaml             # Render Blueprint (optional)
+├── Procfile                # Render Start-Befehl
+├── build_executables.py    # Baut .exe-Dateien
+├── build_exe.bat           # Einfacher Doppelklick-Build
+└── README.md               # Diese Datei
 ```
+
+---
+
+## Client-Befehle
+
+```powershell
+python main.py --backup             # Einmaliges Backup (inkrementell)
+python main.py --backup --full      # Vollständiges Backup
+python main.py --daemon             # Dauermodus (alle 3 Std)
+python main.py --register           # Nur am Server registrieren
+```
+
+---
+
+## Was das System kann
+
+- **Inkrementelle Backups**: Nur geänderte Dateien werden hochgeladen
+- **Protokollführung**: Jeder Job, jede Datei, jeder Fehler wird geloggt
+- **Metadaten-Export**: Alle Backup-Daten als JSON herunterladen
+- **Admin-Oberfläche**: Django-Admin mit voller Kontrolle
+- **Auto-Cleanup**: Backups älter als 5 Tage werden automatisch gelöscht
+- **Unternehmens-Login**: Mehrere Firmen mit eigenen Clients
+- **Windows Task Scheduler**: Automatische Einrichtung bei Installation
+- **Null Konfiguration**: Keine Env-Variablen, kein Supabase nötig
