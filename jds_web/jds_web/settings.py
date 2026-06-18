@@ -1,14 +1,21 @@
 import os
+import uuid
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "insecure-dev-key-change-in-production")
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
+SECRET_FILE = BASE_DIR / "media" / ".secret_key"
+if os.path.exists(SECRET_FILE):
+    with open(SECRET_FILE) as f:
+        SECRET_KEY = f.read().strip()
+else:
+    SECRET_KEY = "django-insecure-" + uuid.uuid4().hex + uuid.uuid4().hex
+    os.makedirs(SECRET_FILE.parent, exist_ok=True)
+    with open(SECRET_FILE, "w") as f:
+        f.write(SECRET_KEY)
+
+DEBUG = False
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -57,22 +64,10 @@ WSGI_APPLICATION = "jds_web.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("SUPABASE_DB_NAME", "postgres"),
-        "USER": os.getenv("SUPABASE_DB_USER", "postgres"),
-        "PASSWORD": os.getenv("SUPABASE_DB_PASSWORD", ""),
-        "HOST": os.getenv("SUPABASE_DB_HOST", "localhost"),
-        "PORT": os.getenv("SUPABASE_DB_PORT", "5432"),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "media" / "db.sqlite3",
     }
 }
-
-if not DATABASES["default"]["PASSWORD"]:
-    DATABASES["default"]["ENGINE"] = "django.db.backends.sqlite3"
-    DATABASES["default"]["NAME"] = BASE_DIR / "db.sqlite3"
-    del DATABASES["default"]["USER"]
-    del DATABASES["default"]["PASSWORD"]
-    del DATABASES["default"]["HOST"]
-    del DATABASES["default"]["PORT"]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -112,10 +107,9 @@ CORS_ALLOW_ALL_ORIGINS = True
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800
 
-if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host != "*"]
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com"]
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
