@@ -89,7 +89,6 @@ def client_detail(request, client_id):
     return render(request, "backup_app/client_detail.html", context)
 
 
-@staff_member_required
 def settings_view(request):
     try:
         settings_obj = CompanySettings.get_settings()
