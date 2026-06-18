@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JDS Serv - Backup Verwaltung{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'backup_app/css/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'dashboard' %}" class="nav-brand">JDS Serv</a>
+            <ul class="nav-links">
+                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'admin:index' %}">Admin</a></li>
+                <li><a href="{% url 'settings' %}">Einstellungen</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'admin:logout' %}">Logout</a></li>
+                {% else %}
+                    <li><a href="{% url 'admin:login' %}">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>JDS Serv &copy; {% now "Y" %} - Backup-Management-System</p>
+    </footer>
+</body>
+</html>

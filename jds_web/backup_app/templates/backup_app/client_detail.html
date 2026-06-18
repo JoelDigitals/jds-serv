@@ -1,0 +1,81 @@
+{% extends "backup_app/base.html" %}
+{% block title %}{{ client.name }} - Details{% endblock %}
+{% block content %}
+<div class="client-detail">
+    <a href="{% url 'dashboard' %}" class="btn btn-sm">&larr; Zurück</a>
+    <h1>{{ client.name }}</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card"><span class="stat-value">{{ stats.total }}</span><span class="stat-label">Backups</span></div>
+        <div class="stat-card success"><span class="stat-value">{{ stats.completed }}</span><span class="stat-label">Erfolgreich</span></div>
+        <div class="stat-card danger"><span class="stat-value">{{ stats.failed }}</span><span class="stat-label">Fehlgeschlagen</span></div>
+        <div class="stat-card">
+            <span class="stat-value">
+                {% if stats.total_size > 1073741824 %}
+                    {{ stats.total_size|filesizeformat }}
+                {% else %}
+                    {{ stats.total_size|filesizeformat }}
+                {% endif %}
+            </span>
+            <span class="stat-label">Gesamtgröße</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Client-Informationen</h3>
+        <table class="info-table">
+            <tr><td>Maschinen-ID</td><td><code>{{ client.machine_id }}</code></td></tr>
+            <tr><td>API-Token</td><td><code>{{ client.api_token|truncatechars:30 }}...</code></td></tr>
+            <tr><td>Betriebssystem</td><td>{{ client.operating_system|default:"Unbekannt" }}</td></tr>
+            <tr><td>Status</td><td>{% if client.is_active %}<span class="badge badge-success">Aktiv</span>{% else %}<span class="badge badge-danger">Inaktiv</span>{% endif %}</td></tr>
+            <tr><td>Zuletzt gesehen</td><td>{{ client.last_seen|date:"d.m.Y H:i"|default:"Nie" }}</td></tr>
+            <tr><td>Erstellt</td><td>{{ client.created_at|date:"d.m.Y H:i" }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Backup-Verlauf</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Status</th><th>Dateien</th><th>Größe</th><th>Gestartet</th><th>Abgeschlossen</th></tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.id }}</td>
+                        <td><span class="badge badge-{{ job.status }}">{{ job.get_status_display }}</span></td>
+                        <td>{{ job.total_files }}</td>
+                        <td>{{ job.total_size|filesizeformat }}</td>
+                        <td>{{ job.started_at|date:"d.m.Y H:i" }}</td>
+                        <td>{{ job.completed_at|date:"d.m.Y H:i"|default:"-" }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="6" class="text-center">Keine Backup-Jobs</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Letzte Logs</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Level</th><th>Nachricht</th><th>Zeit</th></tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><span class="badge badge-{{ log.level }}">{{ log.get_level_display }}</span></td>
+                        <td>{{ log.message }}</td>
+                        <td>{{ log.created_at|date:"d.m.Y H:i" }}</td>
+                    </tr>
+                    {% empty %}<tr><td colspan="3" class="text-center">Keine Logs</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

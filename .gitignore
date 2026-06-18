@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+build_dist/
+*.spec
+
+# Virtualenv
+venv/
+.env
+*.venv
+
+# Django
+jds_web/staticfiles/
+jds_web/media/backups/
+jds_web/db.sqlite3
+
+# Client
+jds_client/.jds_token
+jds_client/.jds_data
+jds_client/.jds_backup_state.json
+jds_client/*.log
+jds_client/__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store

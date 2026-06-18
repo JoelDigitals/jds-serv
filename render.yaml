@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: jds-serv
+    env: python
+    buildCommand: |
+      pip install -r jds_web/requirements.txt
+      cd jds_web && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    startCommand: cd jds_web && gunicorn jds_web.wsgi:application --workers=2 --threads=2 --timeout=120 --bind=0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: SUPABASE_DB_NAME
+        value: postgres
+      - key: SUPABASE_DB_USER
+        value: postgres
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: SUPABASE_DB_HOST
+        sync: false
+      - key: SUPABASE_DB_PORT
+        value: "5432"
+    disk:
+      name: backup-data
+      mountPath: /opt/render/project/src/jds_web/media
+      sizeGB: 10
+
+  - type: cron
+    name: jds-cleanup
+    env: python
+    buildCommand: pip install -r jds_web/requirements.txt
+    startCommand: cd jds_web && python manage.py cleanup_old_backups
+    schedule: "0 */6 * * *"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: SUPABASE_DB_NAME
+        value: postgres
+      - key: SUPABASE_DB_USER
+        value: postgres
+      - key: SUPABASE_DB_PASSWORD
+        sync: false
+      - key: SUPABASE_DB_HOST
+        sync: false
+      - key: SUPABASE_DB_PORT
+        value: "5432"

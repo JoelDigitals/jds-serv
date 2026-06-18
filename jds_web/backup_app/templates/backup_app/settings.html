@@ -1,0 +1,50 @@
+{% extends "backup_app/base.html" %}
+{% block title %}Einstellungen{% endblock %}
+{% block content %}
+<div class="settings-page">
+    <h1>Unternehmenseinstellungen</h1>
+
+    <form method="post" class="settings-form">
+        {% csrf_token %}
+        <div class="card">
+            <h3>Allgemein</h3>
+            <div class="form-group">
+                <label for="company_name">Firmenname</label>
+                <input type="text" id="company_name" name="company_name" value="{{ settings.company_name }}" class="form-control">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Backup-Einstellungen</h3>
+            <div class="form-group">
+                <label for="backup_retention_days">Aufbewahrungsdauer (Tage)</label>
+                <input type="number" id="backup_retention_days" name="backup_retention_days" value="{{ settings.backup_retention_days }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="max_file_size_mb">Max. Dateigröße (MB)</label>
+                <input type="number" id="max_file_size_mb" name="max_file_size_mb" value="{{ settings.max_file_size_mb }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="storage_limit_gb">Speicherlimit (GB)</label>
+                <input type="number" id="storage_limit_gb" name="storage_limit_gb" value="{{ settings.storage_limit_gb }}" class="form-control">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Benachrichtigungen</h3>
+            <div class="form-group checkbox">
+                <label>
+                    <input type="checkbox" name="notify_on_failure" {% if settings.notify_on_failure %}checked{% endif %}>
+                    Bei Fehlern benachrichtigen
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="notification_email">Benachrichtigungs-E-Mail</label>
+                <input type="email" id="notification_email" name="notification_email" value="{{ settings.notification_email }}" class="form-control">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Speichern</button>
+    </form>
+</div>
+{% endblock %}
