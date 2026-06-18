@@ -1,31 +1,38 @@
 {% extends "backup_app/base.html" %}
-{% block title %}Neuen Client anlegen{% endblock %}
+{% block title %}Client anlegen{% endblock %}
 {% block content %}
-<div class="client-create-page">
-    <a href="{% url 'dashboard' %}" class="btn btn-sm">&larr; Zurück</a>
-    <h1 style="margin-top: 15px;">Neuen Client (PC/Laptop) anlegen</h1>
 
-    <div class="card" style="margin-top: 20px; max-width: 600px;">
-        <h3>Client-Informationen</h3>
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">
-            Erstelle hier ein neues Konto für ein Gerät. Nach dem Speichern wird ein API-Token generiert.
-            Trage diesen Token im Installer-Programm auf dem Laptop des Mitarbeiters ein.
-        </p>
-
-        <form method="post" class="settings-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="name">Geräte-Name (z.B. Laptop-Müller-01)</label>
-                <input type="text" id="name" name="name" required class="form-control" placeholder="Laptop-Name">
-            </div>
-
-            <div class="form-group">
-                <label for="notes">Notizen / Abteilung / Mitarbeiter</label>
-                <textarea id="notes" name="notes" class="form-control" style="height: 100px; resize: none;" placeholder="Z.B. Vertrieb, Herr Müller"></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Client erstellen</button>
-        </form>
+<div class="page-header">
+    <div>
+        <h1>&#10133; Neuen Client anlegen</h1>
+        <p>Erstelle einen neuen Client für einen Mitarbeiter-PC oder Laptop</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">&#8592; Zurück</a>
     </div>
 </div>
+
+<div class="section" style="max-width:600px;">
+    <h2>&#128187; Client-Informationen</h2>
+    <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:20px;">
+        Nach dem Anlegen wird ein <strong>API-Token</strong> generiert. 
+        Diesen Token im Installer-Programm auf dem PC des Mitarbeiters eingeben.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Geräte-Name (z.B. Laptop-Müller-01)</label>
+            <input type="text" id="name" name="name" required class="form-control" placeholder="Laptop-Name">
+        </div>
+        <div class="form-group">
+            <label for="notes">Notizen / Abteilung</label>
+            <textarea id="notes" name="notes" class="form-control" placeholder="z.B. Vertrieb, Herr Müller"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">&#10133; Client erstellen</button>
+    </form>
+</div>
+
+<div class="footer">JDS Serv &copy; {% now "Y" %}</div>
+
 {% endblock %}

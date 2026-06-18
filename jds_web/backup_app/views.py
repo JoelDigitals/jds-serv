@@ -54,7 +54,6 @@ def dashboard(request):
         total_clients = active_clients = total_backups = 0
         successful_backups = failed_backups = 0
         total_size = 0
-        total_size_gb = 0
         recent_jobs = []
         clients = []
 

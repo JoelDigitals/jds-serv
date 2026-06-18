@@ -1,118 +1,134 @@
 {% extends "backup_app/base.html" %}
-{% block title %}JDS Serv - Dashboard{% endblock %}
+{% block title %}JDS Serv · Dashboard{% endblock %}
 {% block content %}
-<div class="dashboard">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-        <h1 style="margin-bottom: 0;">JDS Backup Dashboard</h1>
-        <div style="display: flex; gap: 10px;">
-            <a href="{% url 'client_create' %}" class="btn btn-primary">+ Neuen Client anlegen</a>
-            <a href="{% url 'export_metadata' %}" class="btn" style="background: #10b981;">Metadaten exportieren</a>
-        </div>
-    </div>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <span class="stat-value">{{ total_clients }}</span>
-            <span class="stat-label">Clients gesamt</span>
-        </div>
-        <div class="stat-card success">
-            <span class="stat-value">{{ active_clients }}</span>
-            <span class="stat-label">Aktive Clients</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-value">{{ total_backups }}</span>
-            <span class="stat-label">Backups gesamt</span>
-        </div>
-        <div class="stat-card success">
-            <span class="stat-value">{{ successful_backups }}</span>
-            <span class="stat-label">Erfolgreich</span>
-        </div>
-        <div class="stat-card danger">
-            <span class="stat-value">{{ failed_backups }}</span>
-            <span class="stat-label">Fehlgeschlagen</span>
-        </div>
-        <div class="stat-card">
-            <span class="stat-value">{{ total_size_gb }} GB</span>
-            <span class="stat-label">Gesamtgröße</span>
-        </div>
+<div class="page-header">
+    <div>
+        <h1>JDS Backup Dashboard</h1>
+        <p>Übersicht aller Clients, Backups und Systemaktivität</p>
     </div>
-
-    <div class="section">
-        <h2>Clients</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Maschinen-ID</th>
-                        <th>Status</th>
-                        <th>Zuletzt gesehen</th>
-                        <th>Backups</th>
-                        <th>Aktion</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for c in clients %}
-                    <tr>
-                        <td>{{ c.name }}</td>
-                        <td><code>{{ c.machine_id|truncatechars:20 }}</code></td>
-                        <td>
-                            {% if c.is_active %}
-                                <span class="badge badge-success">Aktiv</span>
-                            {% else %}
-                                <span class="badge badge-danger">Inaktiv</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ c.last_seen|default:"Nie"|date:"d.m.Y H:i" }}</td>
-                        <td>{{ c.job_count }}</td>
-                        <td><a href="{% url 'client_detail' c.id %}" class="btn btn-sm">Details</a></td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center">Noch keine Clients registriert</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>Letzte Backup-Jobs</h2>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Client</th>
-                        <th>Status</th>
-                        <th>Dateien</th>
-                        <th>Größe</th>
-                        <th>Gestartet</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for job in recent_jobs %}
-                    <tr>
-                        <td>{{ job.client.name }}</td>
-                        <td>
-                            <span class="badge badge-{{ job.status }}">
-                                {{ job.get_status_display }}
-                            </span>
-                        </td>
-                        <td>{{ job.total_files }}</td>
-                        <td>
-                            {% if job.total_size > 1073741824 %}
-                                {{ job.total_size|filesizeformat }}
-                            {% else %}
-                                {{ job.total_size|filesizeformat }}
-                            {% endif %}
-                        </td>
-                        <td>{{ job.started_at|date:"d.m.Y H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="5" class="text-center">Noch keine Backup-Jobs</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="page-actions">
+        <a href="{% url 'client_create' %}" class="btn btn-primary">&#10133; Neuen Client anlegen</a>
+        <a href="{% url 'export_metadata' %}" class="btn btn-success">&#8615; Metadaten exportieren</a>
     </div>
 </div>
+
+<div class="stats-grid">
+    <div class="stat-card accent">
+        <div class="stat-icon">&#128187;</div>
+        <div class="stat-value">{{ total_clients }}</div>
+        <div class="stat-label">Clients gesamt</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon">&#9989;</div>
+        <div class="stat-value">{{ active_clients }}</div>
+        <div class="stat-label">Aktive Clients</div>
+    </div>
+    <div class="stat-card accent">
+        <div class="stat-icon">&#128190;</div>
+        <div class="stat-value">{{ total_backups }}</div>
+        <div class="stat-label">Backups gesamt</div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon">&#10004;</div>
+        <div class="stat-value">{{ successful_backups }}</div>
+        <div class="stat-label">Erfolgreich</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon">&#9888;</div>
+        <div class="stat-value">{{ failed_backups }}</div>
+        <div class="stat-label">Fehlgeschlagen</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">&#128451;</div>
+        <div class="stat-value">{{ total_size_gb }} GB</div>
+        <div class="stat-label">Gesamtgröße</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>&#128187; Clients</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Maschinen-ID</th>
+                    <th>Status</th>
+                    <th>Zuletzt gesehen</th>
+                    <th>Backups</th>
+                    <th>Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in clients %}
+                <tr>
+                    <td style="font-weight:600;">{{ c.name }}</td>
+                    <td><code>{{ c.machine_id|truncatechars:18 }}</code></td>
+                    <td>
+                        {% if c.is_active %}
+                            <span class="badge badge-Aktiv"><span class="status-dot green"></span> Aktiv</span>
+                        {% else %}
+                            <span class="badge badge-Inaktiv"><span class="status-dot red"></span> Inaktiv</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ c.last_seen|default:"Nie"|date:"d.m.Y H:i" }}</td>
+                    <td>{{ c.job_count }}</td>
+                    <td><a href="{% url 'client_detail' c.id %}" class="btn btn-sm btn-secondary">Details</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-icon">&#128187;</div>
+                            <p>Noch keine Clients registriert</p>
+                            <a href="{% url 'client_create' %}" class="btn btn-primary" style="margin-top:12px;">&#10133; Ersten Client anlegen</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section">
+    <h2>&#128337; Letzte Backup-Jobs</h2>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Status</th>
+                    <th>Dateien</th>
+                    <th>Größe</th>
+                    <th>Gestartet</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in recent_jobs %}
+                <tr>
+                    <td style="font-weight:600;">{{ job.client.name }}</td>
+                    <td><span class="badge badge-{{ job.status }}">{{ job.get_status_display }}</span></td>
+                    <td>{{ job.total_files }}</td>
+                    <td>{{ job.total_size|filesizeformat }}</td>
+                    <td>{{ job.started_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <div class="empty-icon">&#128190;</div>
+                            <p>Noch keine Backup-Jobs ausgeführt</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="footer">JDS Serv &copy; {% now "Y" %} &middot; Backup-Management-System</div>
+
 {% endblock %}

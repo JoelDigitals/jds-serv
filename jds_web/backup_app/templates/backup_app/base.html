@@ -3,28 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}JDS Serv - Backup Verwaltung{% endblock %}</title>
+    <title>{% block title %}JDS Serv{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'backup_app/css/style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="{% url 'dashboard' %}" class="nav-brand">JDS Serv</a>
-            <ul class="nav-links">
-                <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'admin:index' %}">Admin</a></li>
-                <li><a href="{% url 'settings' %}">Einstellungen</a></li>
-                {% if user.is_authenticated %}
-                    <li><a href="{% url 'admin:logout' %}">Logout</a></li>
-                {% else %}
-                    <li><a href="{% url 'admin:login' %}">Login</a></li>
-                {% endif %}
-            </ul>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <a href="{% url 'dashboard' %}" class="sidebar-logo">
+                <span class="icon">&#128737;</span>
+                JDS Serv
+            </a>
         </div>
-    </nav>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Hauptmenü</div>
+            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <span class="nav-icon">&#9632;</span> Dashboard
+            </a>
+            <a href="{% url 'admin:index' %}">
+                <span class="nav-icon">&#9881;</span> Admin
+            </a>
+            <a href="{% url 'settings' %}">
+                <span class="nav-icon">&#9874;</span> Einstellungen
+            </a>
+            <div class="nav-section">Aktionen</div>
+            <a href="{% url 'client_create' %}">
+                <span class="nav-icon">&#10133;</span> Client anlegen
+            </a>
+            <a href="{% url 'export_metadata' %}">
+                <span class="nav-icon">&#8615;</span> Metadaten exportieren
+            </a>
+            <div style="margin-top: auto;"></div>
+        </nav>
+        <div class="sidebar-user">
+            <div class="avatar">{% if user.is_authenticated %}{{ user.username|make_list|first|upper }}{% else %}?{% endif %}</div>
+            <div>
+                <div style="color:var(--text); font-weight:600; font-size:0.85rem;">{% if user.is_authenticated %}{{ user.username }}{% else %}Gast{% endif %}</div>
+                {% if user.is_authenticated %}
+                <a href="{% url 'admin:logout' %}" style="font-size:0.75rem;">Abmelden</a>
+                {% else %}
+                <a href="{% url 'admin:login' %}" style="font-size:0.75rem;">Anmelden</a>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
 
-    <main class="container">
+    <main class="main">
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }}">{{ message }}</div>
@@ -32,9 +58,5 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
-
-    <footer class="footer">
-        <p>JDS Serv &copy; {% now "Y" %} - Backup-Management-System</p>
-    </footer>
 </body>
 </html>
