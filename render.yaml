@@ -27,25 +27,3 @@ services:
       name: backup-data
       mountPath: /opt/render/project/src/jds_web/media
       sizeGB: 10
-
-  - type: cron
-    name: jds-cleanup
-    env: python
-    buildCommand: pip install -r jds_web/requirements.txt
-    startCommand: cd jds_web && python manage.py cleanup_old_backups
-    schedule: "0 */6 * * *"
-    envVars:
-      - key: DJANGO_SECRET_KEY
-        sync: false
-      - key: DJANGO_DEBUG
-        value: "False"
-      - key: SUPABASE_DB_NAME
-        value: postgres
-      - key: SUPABASE_DB_USER
-        value: postgres
-      - key: SUPABASE_DB_PASSWORD
-        sync: false
-      - key: SUPABASE_DB_HOST
-        sync: false
-      - key: SUPABASE_DB_PORT
-        value: "5432"
