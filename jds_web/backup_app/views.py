@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import JsonResponse, FileResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate
@@ -38,17 +38,25 @@ def get_client_from_request(request):
 
 
 def dashboard(request):
-    total_clients = Client.objects.count()
-    active_clients = Client.objects.filter(is_active=True).count()
-    total_backups = BackupJob.objects.count()
-    successful_backups = BackupJob.objects.filter(status="completed").count()
-    failed_backups = BackupJob.objects.filter(status="failed").count()
-    total_size = BackupJob.objects.aggregate(s=Sum("total_size"))["s"] or 0
-    recent_jobs = BackupJob.objects.select_related("client").order_by("-started_at")[:20]
-    clients = Client.objects.annotate(
-        job_count=Count("backup_jobs"),
-        last_backup=Max("backup_jobs__started_at")
-    ).order_by("-last_seen")
+    try:
+        total_clients = Client.objects.count()
+        active_clients = Client.objects.filter(is_active=True).count()
+        total_backups = BackupJob.objects.count()
+        successful_backups = BackupJob.objects.filter(status="completed").count()
+        failed_backups = BackupJob.objects.filter(status="failed").count()
+        total_size = BackupJob.objects.aggregate(s=Sum("total_size"))["s"] or 0
+        recent_jobs = BackupJob.objects.select_related("client").order_by("-started_at")[:20]
+        clients = Client.objects.annotate(
+            job_count=Count("backup_jobs"),
+            last_backup=Max("backup_jobs__started_at")
+        ).order_by("-last_seen")
+    except Exception:
+        total_clients = active_clients = total_backups = 0
+        successful_backups = failed_backups = 0
+        total_size = 0
+        total_size_gb = 0
+        recent_jobs = []
+        clients = []
 
     context = {
         "total_clients": total_clients,
@@ -56,7 +64,7 @@ def dashboard(request):
         "total_backups": total_backups,
         "successful_backups": successful_backups,
         "failed_backups": failed_backups,
-        "total_size_gb": round(total_size / (1024**3), 2),
+        "total_size_gb": round(total_size / (1024**3), 2) if total_size else 0,
         "recent_jobs": recent_jobs,
         "clients": clients,
     }
@@ -84,10 +92,15 @@ def client_detail(request, client_id):
 
 @staff_member_required
 def settings_view(request):
-    settings_obj = CompanySettings.get_settings()
+    try:
+        settings_obj = CompanySettings.get_settings()
+    except Exception:
+        settings_obj = None
+    if settings_obj is None:
+        return HttpResponse("Datenbank nicht bereit – bitte Seite neu laden.", status=503)
     if request.method == "POST":
         settings_obj.company_name = request.POST.get("company_name", settings_obj.company_name)
-        settings_obj.backup_retention_days = int(request.POST.get("backup_retention_days", 90))
+        settings_obj.backup_retention_days = int(request.POST.get("backup_retention_days", 5))
         settings_obj.max_file_size_mb = int(request.POST.get("max_file_size_mb", 500))
         settings_obj.notify_on_failure = request.POST.get("notify_on_failure") == "on"
         settings_obj.notification_email = request.POST.get("notification_email", "")
