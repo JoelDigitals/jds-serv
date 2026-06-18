@@ -8,7 +8,11 @@ class BackupAppConfig(AppConfig):
     verbose_name = "JDS Backup Verwaltung"
 
     def ready(self):
-        if "runserver" not in sys.argv and "gunicorn" not in sys.argv[0]:
+        if len(sys.argv) > 1 and sys.argv[1] in (
+            "migrate", "makemigrations", "collectstatic",
+            "createsuperuser", "shell", "ensure_admin",
+            "cleanup_old_backups",
+        ):
             return
         try:
             from .scheduler import start_scheduler
