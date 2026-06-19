@@ -92,6 +92,7 @@ class CompanySettingsAdmin(admin.ModelAdmin):
     list_display = ["company_name", "backup_retention_days", "storage_limit_gb"]
 
     def has_add_permission(self, request):
-        if CompanySettings.objects.exists():
-            return False
-        return True
+        try:
+            return not CompanySettings.objects.exists()
+        except Exception:
+            return True
