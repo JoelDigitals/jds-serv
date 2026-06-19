@@ -36,7 +36,7 @@ git push -u origin main
 | **Region** | Frankfurt (EU) |
 | **Branch** | `main` |
 | **Build Command** | `pip install -r jds_web/requirements.txt` |
-| **Start Command** | `cd jds_web && python manage.py migrate --noinput && python manage.py collectstatic --noinput && python manage.py ensure_admin && gunicorn jds_web.wsgi:application --workers=2 --threads=2 --timeout=120 --bind=0.0.0.0:$PORT` |
+| **Start Command** | `cd jds_web && python manage.py collectstatic --noinput && gunicorn jds_web.wsgi:application --preload --workers=2 --threads=2 --timeout=120 --bind=0.0.0.0:$PORT` |
 | **Instance Type** | **Free** |
 
 5. Ganz unten: **"Add Disk"**
